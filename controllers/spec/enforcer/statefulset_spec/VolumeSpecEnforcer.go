@@ -79,6 +79,10 @@ func (r *VolumeSpecEnforcer) EnforceSpec(statefulSet *apps.StatefulSet) (wasSpec
 		statefulSet.Spec.Template.Spec.Containers[0].VolumeMounts = append(statefulSet.Spec.Template.Spec.Containers[0].VolumeMounts, r.kubegresContext.Kubegres.Spec.Volume.VolumeMounts...)
 	}
 
+	if len(statefulSet.Spec.Template.Spec.InitContainers) >= 0 && statefulSet.Spec.Template.Spec.InitContainers[0].VolumeMounts != nil {
+		statefulSet.Spec.Template.Spec.InitContainers[0].VolumeMounts = append(statefulSet.Spec.Template.Spec.InitContainers[0].VolumeMounts, r.kubegresContext.Kubegres.Spec.Volume.VolumeMounts...)
+	}
+
 	return true, nil
 }
 
@@ -200,11 +204,24 @@ func (r *VolumeSpecEnforcer) removeCustomVolumeMounts(statefulSet *apps.Stateful
 	copy(currentCustomVolumeMountsCopy, currentCustomVolumeMounts)
 
 	container := &statefulSet.Spec.Template.Spec.Containers[0]
+	var initContainer *v1.Container = nil
+	if len(statefulSet.Spec.Template.Spec.InitContainers) > 0 {
+		initContainer := &statefulSet.Spec.Template.Spec.InitContainers[0]
+	}
 
 	for _, customVolumeMount := range currentCustomVolumeMountsCopy {
 		index := r.getIndexOfVolumeMount(customVolumeMount, container.VolumeMounts)
 		if index >= 0 {
 			container.VolumeMounts = append(container.VolumeMounts[:index], container.VolumeMounts[index+1:]...)
+		}
+
+		if initContainer == nil {
+			continue
+		}
+
+		index = r.getIndexOfVolumeMount(customVolumeMount, initContainer.VolumeMounts)
+		if index >= 0 {
+			initContainer.VolumeMounts = append(initContainer.VolumeMounts[:index], initContainer.VolumeMounts[index+1:]...)
 		}
 	}
 }
