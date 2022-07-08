@@ -206,7 +206,7 @@ func (r *VolumeSpecEnforcer) removeCustomVolumeMounts(statefulSet *apps.Stateful
 	container := &statefulSet.Spec.Template.Spec.Containers[0]
 	var initContainer *v1.Container = nil
 	if len(statefulSet.Spec.Template.Spec.InitContainers) > 0 {
-		initContainer := &statefulSet.Spec.Template.Spec.InitContainers[0]
+		initContainer = &statefulSet.Spec.Template.Spec.InitContainers[0]
 	}
 
 	for _, customVolumeMount := range currentCustomVolumeMountsCopy {
